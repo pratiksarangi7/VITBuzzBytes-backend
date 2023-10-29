@@ -1,6 +1,13 @@
 const Otp = require("../models/otp_model");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
+
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
 
 exports.sendOtp = async (req, res, next) => {
   let otp;
@@ -40,4 +47,23 @@ exports.sendOtp = async (req, res, next) => {
     status: "success",
     message: "otp sent successfully",
   });
+};
+
+exports.verifyOtp = async (req, res, next) => {
+  const { email, otp } = req.body;
+  const otpDoc = await Otp.findOne({ email });
+  console.log(email);
+  console.log(otp);
+  if (!otpDoc) {
+    res.status(404).json({ status: "failure", message: "some error occured" });
+    return;
+  }
+  const isMatch = await bcrypt.compare(otp, otpDoc.otp);
+  if (!isMatch) {
+    res.status(400).json({ message: "invalid otp" });
+    return;
+  }
+
+  const token = signToken(email);
+  res.status(200).json({ status: "success", message: "Otp correct", token });
 };
