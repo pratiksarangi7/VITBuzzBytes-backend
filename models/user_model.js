@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
       message: "Password and confirm-password are not the same",
     },
   },
-  tweetsIDs: { type: [String] },
+  buzzesID: { type: [String] },
   passwordChangedAt: Date,
 });
 userSchema.pre("save", async function (next) {
