@@ -32,7 +32,9 @@ exports.postBuzz = async (req, res, next) => {
 
 exports.viewBuzzes = async (req, res, next) => {
   try {
-    const buzzes = await Buzz.find().sort({ createdAt: -1 });
+    // req.query is an obj that contains all queries:
+    // eg, if in url the query is: ?category=ffcs, req.query will be: {category: ffcs}
+    const buzzes = await Buzz.find(req.query).sort({ createdAt: -1 });
     res.status(200).json({ status: "success", data: buzzes });
   } catch (err) {
     res.status(500).json({ status: "failure", message: err.message });
