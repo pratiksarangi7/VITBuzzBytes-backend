@@ -81,6 +81,30 @@ exports.dislikeBuzz = async (req, res, next) => {
   }
 };
 
+exports.deleteBuzz = async (req, res, next) => {
+  let statusCode;
+  try {
+    const buzz = await Buzz.findById(req.params.id);
+    if (!buzz) {
+      statusCode = 404;
+      throw new Error("No buzz found");
+    }
+    if (buzz.createdBy != req.user.userID) {
+      statusCode = 401;
+      throw new Error("unauthorized access");
+    }
+    await User.findByIdAndUpdate(req.user._id, {
+      // pull operator removes all the instances in an array matching a particular condition
+      // $pull: {array: condition}
+      $pull: { buzzesID: req.params.id },
+    });
+    buzz.deleteOne();
+    res.status(204).json({ status: "success" });
+  } catch (err) {
+    res.status(statusCode).json({ message: err.message });
+  }
+};
+
 exports.addComment = async (req, res, next) => {
   try {
     const comment = {

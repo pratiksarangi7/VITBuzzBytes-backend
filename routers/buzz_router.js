@@ -12,11 +12,15 @@ router.post(
   authControllers.protect,
   buzzControllers.dislikeBuzz
 );
+// delete buzz:
+router.delete("/:id", authControllers.protect, buzzControllers.deleteBuzz);
 router.post(
   "/:id/comment",
   authControllers.protect,
   buzzControllers.addComment
 );
+
+// delete comment:
 router.delete(
   "/:id/delete-comment/:commentid",
   authControllers.protect,

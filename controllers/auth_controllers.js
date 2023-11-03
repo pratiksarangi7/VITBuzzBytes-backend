@@ -85,7 +85,6 @@ exports.protect = async (req, res, next) => {
     }
     // we pass data from one middleware to the next in the following way:
     req.user = user;
-    console.log("Protection successful");
     next();
   } catch (e) {
     res.status(401).json({ status: "failure", message: e.message });
