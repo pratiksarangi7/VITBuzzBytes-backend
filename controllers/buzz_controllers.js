@@ -1,6 +1,7 @@
 const express = require("express");
 const User = require("./../models/user_model");
 const Buzz = require("./../models/buzz_model");
+const Comment = require("./../models/comment_model");
 const { signToken } = require("./auth_controllers");
 // user is put into req by the protect middleware(req.user), which runs before post
 exports.postBuzz = async (req, res, next) => {
@@ -70,11 +71,53 @@ exports.dislikeBuzz = async (req, res, next) => {
     }
     // if user removes dislike:
     else {
-      const buzz = await Buzz.findByIdAndUpdate(buzzID, {
+      await Buzz.findByIdAndUpdate(buzzID, {
         $pull: { dislikes: req.user.userID },
       });
     }
     res.status(200).json({ status: "success" });
+  } catch (err) {
+    res.status(500).json({ status: "failure", message: err.message });
+  }
+};
+
+exports.addComment = async (req, res, next) => {
+  try {
+    const comment = {
+      text: req.body.text,
+      userID: req.user.userID,
+      createdAt: Date.now(),
+    };
+    await Buzz.findByIdAndUpdate(req.params.id, {
+      $push: { comments: comment },
+    });
+    res
+      .status(201)
+      .json({ status: "success", message: "comment added successfully" });
+  } catch (e) {
+    res.status(500).json({ status: "failure", message: e.message });
+  }
+};
+
+exports.deleteComment = async (req, res, next) => {
+  try {
+    const buzz = await Buzz.findById(req.params.id);
+    if (!buzz) {
+      res.status(404).json({ status: "failure", message: "not found" });
+      return;
+    }
+    //find the target comment(to be deleted)
+    const targetComment = buzz.comments.id(req.params.commentid);
+    // if the target comment is not created by the user trying to delete it, return unauthorized access
+    if (targetComment.userID != req.user.userID) {
+      res
+        .status(401)
+        .json({ status: "failure", message: "Unauthorized access" });
+      return;
+    }
+    targetComment.deleteOne();
+    await buzz.save();
+    res.status(204).json({ status: "success" });
   } catch (err) {
     res.status(500).json({ status: "failure", message: err.message });
   }

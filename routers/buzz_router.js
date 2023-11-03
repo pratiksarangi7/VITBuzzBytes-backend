@@ -12,5 +12,14 @@ router.post(
   authControllers.protect,
   buzzControllers.dislikeBuzz
 );
-// first protect, then view buzz
+router.post(
+  "/:id/comment",
+  authControllers.protect,
+  buzzControllers.addComment
+);
+router.delete(
+  "/:id/delete-comment/:commentid",
+  authControllers.protect,
+  buzzControllers.deleteComment
+);
 module.exports = router;
