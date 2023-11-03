@@ -5,5 +5,12 @@ const router = express.Router();
 
 // first protect, then post buzz
 router.post("/post-buzz", authControllers.protect, buzzControllers.postBuzz);
+router.get("/view-buzzes", authControllers.protect, buzzControllers.viewBuzzes);
+router.post("/:id/like", authControllers.protect, buzzControllers.likeBuzz);
+router.post(
+  "/:id/dislike",
+  authControllers.protect,
+  buzzControllers.dislikeBuzz
+);
 // first protect, then view buzz
 module.exports = router;
