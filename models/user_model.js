@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
   },
   buzzesID: { type: [String] },
   passwordChangedAt: Date,
+  notifications: [String],
 });
 userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 12);

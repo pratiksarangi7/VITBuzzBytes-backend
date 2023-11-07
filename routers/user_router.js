@@ -9,5 +9,9 @@ router.route("/verify-otp").post(otpControllers.verifyOtp);
 router.route("/signup").post(authControllers.signUp);
 router.route("/login").post(authControllers.logIn);
 router.get("/profile", authControllers.protect, userControllers.viewProfile);
-
+router.get(
+  "/notifications",
+  authControllers.protect,
+  userControllers.viewNotifications
+);
 module.exports = router;

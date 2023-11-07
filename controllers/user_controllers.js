@@ -14,3 +14,15 @@ exports.viewProfile = async (req, res, next) => {
     res.status(500).json({ status: "failure", message: err.message });
   }
 };
+
+exports.viewNotifications = async (req, res, next) => {
+  try {
+    const user = req.user;
+    res.status(200).json({
+      status: "success",
+      data: user.notifications,
+    });
+  } catch (err) {
+    res.status(500).json({ status: "failure", message: err.message });
+  }
+};

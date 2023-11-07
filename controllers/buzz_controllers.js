@@ -1,9 +1,17 @@
 const express = require("express");
 const User = require("./../models/user_model");
 const Buzz = require("./../models/buzz_model");
-const Comment = require("./../models/comment_model");
 const { signToken } = require("./auth_controllers");
 // user is put into req by the protect middleware(req.user), which runs before post
+
+addNotificationToUser = async (userID, action, actionBy) => {
+  const message = `${actionBy} ${action} your buzz`;
+  await User.findOneAndUpdate(
+    { userID },
+    { $push: { notifications: message } }
+  );
+};
+
 exports.postBuzz = async (req, res, next) => {
   try {
     // 1) create new buzz
@@ -49,6 +57,7 @@ exports.likeBuzz = async (req, res, next) => {
       const buzz = await Buzz.findByIdAndUpdate(buzzID, {
         $push: { likes: req.user.userID },
       }); // in next version, send notification to user when like happens
+      await addNotificationToUser(buzz.createdBy, "like", req.user.userID);
     }
     // if user removes like:
     else {
@@ -70,6 +79,7 @@ exports.dislikeBuzz = async (req, res, next) => {
       const buzz = await Buzz.findByIdAndUpdate(buzzID, {
         $push: { dislikes: req.user.userID },
       }); // in next version, send notification to user when dislike happens
+      await addNotificationToUser(buzz.createdBy, "disliked", req.user.userID);
     }
     // if user removes dislike:
     else {
@@ -82,31 +92,6 @@ exports.dislikeBuzz = async (req, res, next) => {
     res.status(500).json({ status: "failure", message: err.message });
   }
 };
-
-exports.deleteBuzz = async (req, res, next) => {
-  let statusCode;
-  try {
-    const buzz = await Buzz.findById(req.params.id);
-    if (!buzz) {
-      statusCode = 404;
-      throw new Error("No buzz found");
-    }
-    if (buzz.createdBy != req.user.userID) {
-      statusCode = 401;
-      throw new Error("unauthorized access");
-    }
-    await User.findByIdAndUpdate(req.user._id, {
-      // pull operator removes all the instances in an array matching a particular condition
-      // $pull: {array: condition}
-      $pull: { buzzesID: req.params.id },
-    });
-    buzz.deleteOne();
-    res.status(204).json({ status: "success" });
-  } catch (err) {
-    res.status(statusCode).json({ message: err.message });
-  }
-};
-
 exports.addComment = async (req, res, next) => {
   try {
     const comment = {
@@ -114,9 +99,12 @@ exports.addComment = async (req, res, next) => {
       userID: req.user.userID,
       createdAt: Date.now(),
     };
-    await Buzz.findByIdAndUpdate(req.params.id, {
+    const buzz = await Buzz.findByIdAndUpdate(req.params.id, {
       $push: { comments: comment },
     });
+    console.log("reached here");
+    await addNotificationToUser(buzz.createdBy, "commented", req.user.userID);
+
     res
       .status(201)
       .json({ status: "success", message: "comment added successfully" });
@@ -146,5 +134,29 @@ exports.deleteComment = async (req, res, next) => {
     res.status(204).json({ status: "success" });
   } catch (err) {
     res.status(500).json({ status: "failure", message: err.message });
+  }
+};
+
+exports.deleteBuzz = async (req, res, next) => {
+  let statusCode;
+  try {
+    const buzz = await Buzz.findById(req.params.id);
+    if (!buzz) {
+      statusCode = 404;
+      throw new Error("No buzz found");
+    }
+    if (buzz.createdBy != req.user.userID) {
+      statusCode = 401;
+      throw new Error("unauthorized access");
+    }
+    await User.findByIdAndUpdate(req.user._id, {
+      // pull operator removes all the instances in an array matching a particular condition
+      // $pull: {array: condition}
+      $pull: { buzzesID: req.params.id },
+    });
+    buzz.deleteOne();
+    res.status(204).json({ status: "success" });
+  } catch (err) {
+    res.status(statusCode).json({ message: err.message });
   }
 };
